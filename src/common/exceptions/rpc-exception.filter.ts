@@ -15,26 +15,35 @@ interface ExceptionObject {
 
 @Catch(RpcException, BadRequestException)
 export class RpcCustomExceptionFilter implements ExceptionFilter {
-  catch(exception: RpcException | BadRequestException, host: ArgumentsHost) {
+  catch(exception: RpcException, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse();
-    const request = ctx.getRequest();
 
-    const exceptionObject: ExceptionObject =
-      exception instanceof RpcException
-        ? (exception.getError() as ExceptionObject)
-        : {
-            statusCode: HttpStatus.BAD_REQUEST,
-            message: exception.getResponse()['message'],
-          };
+    console.log('Custom Exception Filter');
 
-    const status = exceptionObject.statusCode;
+    const rpcError = exception.getError() as ExceptionObject;
+    const name = exception.name;
+    const message = exception.message.substring(
+      0,
+      exception.message.indexOf('(') - 1,
+    );
+    console.log({ name, message });
 
-    response.status(status).json({
-      statusCode: status,
-      timestamp: new Date().toISOString(),
-      path: request.url,
-      message: exceptionObject.message,
+    if (
+      message.includes(
+        'Empty response. There are no subscribers listening to that message',
+      )
+    ) {
+      return response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message,
+      });
+    }
+
+    const statusCode = rpcError.statusCode;
+    response.status(statusCode).json({
+      statusCode,
+      message: rpcError.message,
     });
   }
 }
