@@ -8,7 +8,7 @@ import {
 import { RpcException } from '@nestjs/microservices';
 import { AppError } from '../interfaces/app-error.interface';
 
-@Catch(RpcException, BadRequestException)
+@Catch(RpcException)
 export class RpcCustomExceptionFilter implements ExceptionFilter {
   catch(exception: RpcException, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
@@ -21,11 +21,11 @@ export class RpcCustomExceptionFilter implements ExceptionFilter {
 
   private parseRpcError(exception: RpcException): AppError {
     const rawError = exception.getError();
-
+    console.log('ParseRpcError');
+    console.log(exception);
     const timestamp = new Date().toLocaleString('es-PE', {
       timeZone: 'America/Lima',
     });
-    
     if (
       exception.message.includes('Empty response. There are no subscribers')
     ) {
